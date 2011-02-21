@@ -18,6 +18,9 @@ require File.dirname(__FILE__) + "/ap/awesome_print"
 require File.dirname(__FILE__) + "/ap/core_ext/logger"   if defined?(Logger)
 require File.dirname(__FILE__) + "/ap/mixin/action_view" if defined?(ActionView)
 
+require File.dirname(__FILE__) + "/ap/mixin/ripple_document" if defined?(Ripple::Document)
+
+
 # Load the following under normal circumstatnces as well as in Rails
 # console when required from ~/.irbrc.
 require File.dirname(__FILE__) + "/ap/mixin/active_record"  if defined?(ActiveRecord)  || (defined?(IRB) && ENV['RAILS_ENV'])
