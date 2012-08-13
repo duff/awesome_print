@@ -1,5 +1,5 @@
 ## Awesome Print ##
-Awesome Print is Ruby library that pretty prints Ruby objects in full color
+Awesome Print is a Ruby library that pretty prints Ruby objects in full color
 exposing their internal structure with proper indentation. Rails ActiveRecord
 objects and usage within Rails templates are supported via included mixins.
 
@@ -7,38 +7,42 @@ objects and usage within Rails templates are supported via included mixins.
     # Installing as Ruby gem
     $ gem install awesome_print
 
-    # Installing as Rails plugin
-    $ ruby script/plugin install http://github.com/michaeldv/awesome_print.git
-
     # Cloning the repository
     $ git clone git://github.com/michaeldv/awesome_print.git
 
 ### Usage ###
 
-    require "ap"
+    require "awesome_print"
     ap object, options = {}
 
 Default options:
 
-    :multiline => true,           # Display in multipe lines.
-    :plain  => false,             # Use colors.
-    :indent => 4,                 # Indent using 4 spaces.
-    :index  => true,              # Display array indices.
-    :sorted_hash_keys => false,   # Do not sort hash keys.
+    :indent     => 4,      # Indent using 4 spaces.
+    :index      => true,   # Display array indices.
+    :html       => false,  # Use ANSI color codes rather than HTML.
+    :multiline  => true,   # Display in multiple lines.
+    :plain      => false,  # Use colors.
+    :sort_keys  => false,  # Do not sort hash keys.
+    :limit      => false,  # Limit large output for arrays and hashes. Set to a boolean or integer.
     :color => {
+      :args       => :pale,
       :array      => :white,
-      :bignum     => :blue,
+      :bigdecimal => :blue,
       :class      => :yellow,
       :date       => :greenish,
       :falseclass => :red,
       :fixnum     => :blue,
       :float      => :blue,
-      :hash       => :gray,
+      :hash       => :pale,
+      :keyword    => :cyan,
+      :method     => :purpleish,
       :nilclass   => :red,
       :string     => :yellowish,
+      :struct     => :pale,
       :symbol     => :cyanish,
       :time       => :greenish,
-      :trueclass  => :green
+      :trueclass  => :green,
+      :variable   => :cyanish
     }
 
 Supported color names:
@@ -48,7 +52,7 @@ Supported color names:
 
 ### Examples ###
     $ cat > 1.rb
-    require "ap"
+    require "awesome_print"
     data = [ false, 42, %w(forty two), { :now => Time.now, :class => Time.now.class, :distance => 42e42 } ]
     ap data
     ^D
@@ -68,7 +72,7 @@ Supported color names:
     ]
 
     $ cat > 2.rb
-    require "ap"
+    require "awesome_print"
     data = { :now => Time.now, :class => Time.now.class, :distance => 42e42 }
     ap data, :indent => -2  # <-- Left align hash keys.
     ^D
@@ -80,7 +84,7 @@ Supported color names:
     }
 
     $ cat > 3.rb
-    require "ap"
+    require "awesome_print"
     data = [ false, 42, %w(forty two) ]
     data << data  # <-- Nested array.
     ap data, :multiline => false
@@ -89,7 +93,7 @@ Supported color names:
     [ false, 42, [ "forty", "two" ], [...] ]
 
     $ cat > 4.rb
-    require "ap"
+    require "awesome_print"
     class Hello
       def self.world(x, y, z = nil, &blk)
       end
@@ -102,7 +106,7 @@ Supported color names:
     ]
 
     $ cat > 5.rb
-    require "ap"
+    require "awesome_print"
     ap (''.methods - Object.methods).grep(/!/)
     ^D
     $ ruby 5.rb
@@ -129,10 +133,46 @@ Supported color names:
         [19]     upcase!()           String
     ]
 
+    $ cat > 6.rb
+    require "awesome_print"
+    ap 42 == ap(42)
+    ^D
+    $ ruby 6.rb
+    42
+    true
+    $ cat 7.rb
+    require "awesome_print"
+    some_array = (1..1000).to_a
+    ap some_array, :limit => true
+    ^D
+    $ ruby 7.rb
+    [
+        [  0] 1,
+        [  1] 2,
+        [  2] 3,
+        [  3] .. [996],
+        [997] 998,
+        [998] 999,
+        [999] 1000
+    ]
+
+    $ cat 8.rb
+    require "awesome_print"
+    some_array = (1..1000).to_a
+    ap some_array, :limit => 5
+    ^D
+    $ ruby 8.rb
+    [
+        [  0] 1,
+        [  1] 2,
+        [  2] .. [997],
+        [998] 999,
+        [999] 1000
+    ]
+
 ### Example (Rails console) ###
-    $ ruby script/console
-    Loading development environment (Rails 2.3.5)
-    rails> require "ap"
+    $ rails console
+    rails> require "awesome_print"
     rails> ap Account.all(:limit => 2)
     [
         [0] #<Account:0x1033220b8> {
@@ -189,10 +229,10 @@ Supported color names:
 
 ### IRB integration ###
 To use awesome_print as default formatter in irb and Rails console add the following
-lines into your ~/.irbrc file:
+code to your ~/.irbrc file:
 
 	require "rubygems"
-	require "ap"
+	require "awesome_print"
 
 	unless IRB.version.include?('DietRB')
 	  IRB::Irb.class_eval do
@@ -208,25 +248,40 @@ lines into your ~/.irbrc file:
 	  end.new
 	end
 
+### PRY integration ###
+If you miss awesome_print's way of formatting output, here's how you can use it in place
+of the formatting which comes with pry. Add the following code to your ~/.pryrc:
+
+	require "rubygems"
+	require "awesome_print"
+	
+	Pry.print = proc { |output, value| output.puts value.ai }
+
 ### Logger Convenience Method ###
-awesome_print adds an ap method to the Logger and ActiveSupport::BufferedLogger classes,
-allowing you to call:
+awesome_print adds the 'ap' method to the Logger and ActiveSupport::BufferedLogger classes
+letting you call:
 
     logger.ap object
 
-By default, this logs at the :debug level. You can override that globally with
+By default, this logs at the :debug level. You can override that globally with:
 
     :log_level => :info
 
-in the custom defaults (see below), or you can override on a per call basis with
+in the custom defaults (see below). You can also override on a per call basis with:
 
     logger.ap object, :warn
 
 ### ActionView Convenience Method ###
-awesome_print adds an ap method to the ActionView::Base class making it available
+awesome_print adds the 'ap' method to the ActionView::Base class making it available
 within Rails templates. For example:
 
-    <%= ap @accounts.first %>
+    <%= ap @accounts.first %>   # ERB
+    != ap @accounts.first       # HAML
+
+With other web frameworks (ex: in Sinatra templates) you can explicitly request HTML
+formatting:
+
+    <%= ap @accounts.first, :html => true %>
 
 ### Setting Custom Defaults ###
 You can set your own default options by creating ``.aprc`` file in your home
@@ -244,9 +299,9 @@ For example:
 
 ### Running Specs ###
 
-    $ rake spec                           # Entire spec suite.
-    $ ruby -rubygems spec/logger_spec.rb  # Individual spec file (Ruby 1.8.7 and RSpec 1.3+)
-    $ rspec spec/logger_spec.rb           # Individual spec file (Ruby 1.9.2 and RSpec 2.0+)
+    $ gem install rspec           # RSpec 2.x is the requirement.
+    $ rake spec                   # Run the entire spec suite.
+    $ rspec spec/logger_spec.rb   # Run individual spec file.
 
 ### Note on Patches/Pull Requests ###
 * Fork the project on Github.
@@ -257,16 +312,28 @@ For example:
 
 ### Contributors ###
 
+* Adam Doppelt -- https://github.com/gurgeous
+* Andrew O'Brien -- https://github.com/AndrewO
+* Andrew Horsman -- https://github.com/basicxman
+* Benoit Daloze -- http://github.com/eregon
+* Brandon Zylstra -- https://github.com/brandondrew
+* Daniel Johnson -- https://github.com/adhd360
 * Daniel Bretoi -- http://github.com/danielb2
 * Eloy Duran -- http://github.com/alloy
-* Benoit Daloze -- http://github.com/eregon
+* Elpizo Choi -- https://github.com/fuJiin
+* Greg Weber -- https://github.com/gregwebs
+* Jeff Felchner -- https://github.com/jfelchner
 * Sean Gallagher -- http://github.com/torandu
+* Stephan Hagemann -- https://github.com/shageman
 * Tim Harper -- http://github.com/timcharper
 * Tobias Crawley -- http://github.com/tobias
+* Viktar Basharymau -- https://github.com/DNNX
 
 ### License ###
 Copyright (c) 2010-2011 Michael Dvorkin
+
 twitter.com/mid
+
 %w(mike dvorkin.net) * "@" || %w(mike fatfreecrm.com) * "@"
 
 Released under the MIT license. See LICENSE file for details.

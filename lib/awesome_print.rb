@@ -4,24 +4,28 @@
 # See LICENSE file or http://www.opensource.org/licenses/mit-license.php
 #------------------------------------------------------------------------------
 #
-# This is the copy of original 'ap.rb' file that matches the gem name. It makes
-# it possible to omit the :require part in bundler's Gemfile:
+# AwesomePrint might be loaded implicitly through ~/.irbrc so do nothing
+# for subsequent requires.
 #
-# gem 'awesome_print', '>= 0.2.1', :require => 'ap'
-# gem 'awesome_print', '>= 3.0.0'
-#
-%w(array string method object class kernel).each do |file|
-  require File.dirname(__FILE__) + "/ap/core_ext/#{file}"
+unless defined?(AwesomePrint)
+  %w(array string method object class kernel).each do |file|
+    require File.dirname(__FILE__) + "/awesome_print/core_ext/#{file}"
+  end
+
+  require File.dirname(__FILE__) + "/awesome_print/inspector"
+  require File.dirname(__FILE__) + "/awesome_print/formatter"
+  require File.dirname(__FILE__) + "/awesome_print/version"
+  require File.dirname(__FILE__) + "/awesome_print/core_ext/logger" if defined?(Logger)
+
+  # Load the following under normal circumstances as well as in Rails
+  # console when required from ~/.irbrc.
+  require File.dirname(__FILE__) + "/awesome_print/ext/active_record"  if defined?(ActiveRecord)  || (defined?(IRB) && ENV['RAILS_ENV'])
+  require File.dirname(__FILE__) + "/awesome_print/ext/active_support" if defined?(ActiveSupport) || (defined?(IRB) && ENV['RAILS_ENV'])
+
+  # Load remaining extensions.
+  require File.dirname(__FILE__) + "/awesome_print/ext/action_view"     if defined?(ActionView::Base)
+  require File.dirname(__FILE__) + "/awesome_print/ext/mongo_mapper"    if defined?(MongoMapper)
+  require File.dirname(__FILE__) + "/awesome_print/ext/mongoid"         if defined?(Mongoid)
+  require File.dirname(__FILE__) + "/awesome_print/ext/nokogiri"        if defined?(Nokogiri)
+  require File.dirname(__FILE__) + "/awesome_print/ext/ripple_document" if defined?(Ripple::Document)
 end
-
-require File.dirname(__FILE__) + "/ap/awesome_print"
-require File.dirname(__FILE__) + "/ap/core_ext/logger"   if defined?(Logger)
-require File.dirname(__FILE__) + "/ap/mixin/action_view" if defined?(ActionView)
-
-require File.dirname(__FILE__) + "/ap/mixin/ripple_document" if defined?(Ripple::Document)
-
-
-# Load the following under normal circumstatnces as well as in Rails
-# console when required from ~/.irbrc.
-require File.dirname(__FILE__) + "/ap/mixin/active_record"  if defined?(ActiveRecord)  || (defined?(IRB) && ENV['RAILS_ENV'])
-require File.dirname(__FILE__) + "/ap/mixin/active_support" if defined?(ActiveSupport) || (defined?(IRB) && ENV['RAILS_ENV'])

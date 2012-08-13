@@ -3,12 +3,12 @@ require "bigdecimal"
 require "rational"
 
 describe "AwesomePrint" do
-  before(:each) do
+  before do
     stub_dotfile!
   end
 
   describe "Array" do
-    before(:each) do
+    before do
       @arr = [ 1, :two, "three", [ nil, [ true, false] ] ]
     end
 
@@ -91,14 +91,14 @@ EOS
     it "colored multiline (default)" do
       @arr.ai.should == <<-EOS.strip
 [
-\e[1;37m    [0] \e[0m\e[1;34m1\e[0m,
-\e[1;37m    [1] \e[0m\e[0;36m:two\e[0m,
-\e[1;37m    [2] \e[0m\e[0;33m\"three\"\e[0m,
-\e[1;37m    [3] \e[0m[
-\e[1;37m        [0] \e[0m\e[1;31mnil\e[0m,
-\e[1;37m        [1] \e[0m[
-\e[1;37m            [0] \e[0m\e[1;32mtrue\e[0m,
-\e[1;37m            [1] \e[0m\e[1;31mfalse\e[0m
+    \e[1;37m[0] \e[0m\e[1;34m1\e[0m,
+    \e[1;37m[1] \e[0m\e[0;36m:two\e[0m,
+    \e[1;37m[2] \e[0m\e[0;33m\"three\"\e[0m,
+    \e[1;37m[3] \e[0m[
+        \e[1;37m[0] \e[0m\e[1;31mnil\e[0m,
+        \e[1;37m[1] \e[0m[
+            \e[1;37m[0] \e[0m\e[1;32mtrue\e[0m,
+            \e[1;37m[1] \e[0m\e[1;31mfalse\e[0m
         ]
     ]
 ]
@@ -108,14 +108,14 @@ EOS
     it "colored multiline indented" do
       @arr.ai(:indent => 8).should == <<-EOS.strip
 [
-\e[1;37m        [0] \e[0m\e[1;34m1\e[0m,
-\e[1;37m        [1] \e[0m\e[0;36m:two\e[0m,
-\e[1;37m        [2] \e[0m\e[0;33m\"three\"\e[0m,
-\e[1;37m        [3] \e[0m[
-\e[1;37m                [0] \e[0m\e[1;31mnil\e[0m,
-\e[1;37m                [1] \e[0m[
-\e[1;37m                        [0] \e[0m\e[1;32mtrue\e[0m,
-\e[1;37m                        [1] \e[0m\e[1;31mfalse\e[0m
+        \e[1;37m[0] \e[0m\e[1;34m1\e[0m,
+        \e[1;37m[1] \e[0m\e[0;36m:two\e[0m,
+        \e[1;37m[2] \e[0m\e[0;33m\"three\"\e[0m,
+        \e[1;37m[3] \e[0m[
+                \e[1;37m[0] \e[0m\e[1;31mnil\e[0m,
+                \e[1;37m[1] \e[0m[
+                        \e[1;37m[0] \e[0m\e[1;32mtrue\e[0m,
+                        \e[1;37m[1] \e[0m\e[1;31mfalse\e[0m
                 ]
         ]
 ]
@@ -129,7 +129,7 @@ EOS
 
   #------------------------------------------------------------------------------
   describe "Nested Array" do
-    before(:each) do
+    before do
       @arr = [ 1, 2 ]
       @arr << @arr
     end
@@ -160,8 +160,97 @@ EOS
   end
 
   #------------------------------------------------------------------------------
-  describe "Hash" do
+  describe "Limited Output Array" do
     before(:each) do
+      @arr = (1..1000).to_a
+    end
+
+    it "plain limited output large" do
+      @arr.ai(:plain => true, :limit => true).should == <<-EOS.strip
+[
+    [  0] 1,
+    [  1] 2,
+    [  2] 3,
+    [  3] .. [996],
+    [997] 998,
+    [998] 999,
+    [999] 1000
+]
+EOS
+    end
+
+    it "plain limited output small" do
+      @arr = @arr[0..3]
+      @arr.ai(:plain => true, :limit => true).should == <<-EOS.strip
+[
+    [0] 1,
+    [1] 2,
+    [2] 3,
+    [3] 4
+]
+EOS
+    end
+
+    it "plain limited output with 10 lines" do
+      @arr.ai(:plain => true, :limit => 10).should == <<-EOS.strip
+[
+    [  0] 1,
+    [  1] 2,
+    [  2] 3,
+    [  3] 4,
+    [  4] 5,
+    [  5] .. [995],
+    [996] 997,
+    [997] 998,
+    [998] 999,
+    [999] 1000
+]
+EOS
+    end
+
+    it "plain limited output with 11 lines" do
+      @arr.ai(:plain => true, :limit => 11).should == <<-EOS.strip
+[
+    [  0] 1,
+    [  1] 2,
+    [  2] 3,
+    [  3] 4,
+    [  4] 5,
+    [  5] .. [994],
+    [995] 996,
+    [996] 997,
+    [997] 998,
+    [998] 999,
+    [999] 1000
+]
+EOS
+    end
+  end
+
+  #------------------------------------------------------------------------------
+  describe "Limited Output Hash" do
+    before(:each) do
+      @hash = ("a".."z").inject({}) { |h, v| h.merge({ v => v.to_sym }) }
+    end
+
+    it "plain limited output" do
+      @hash.ai(:sort_keys => true, :plain => true, :limit => true).should == <<-EOS.strip
+{
+    "a" => :a,
+    "b" => :b,
+    "c" => :c,
+    "d" => :d .. "w" => :w,
+    "x" => :x,
+    "y" => :y,
+    "z" => :z
+}
+EOS
+    end
+  end
+
+  #------------------------------------------------------------------------------
+  describe "Hash" do
+    before do
       @hash = { 1 => { :sym => { "str" => { [1, 2, 3] => { { :k => :v } => Hash } } } } }
     end
     
@@ -245,7 +334,7 @@ EOS
 
   #------------------------------------------------------------------------------
   describe "Nested Hash" do
-    before(:each) do
+    before do
       @hash = {}
       @hash[:a] = @hash
     end
@@ -265,7 +354,7 @@ EOS
 
   #------------------------------------------------------------------------------
   describe "Hash with several keys" do
-    before(:each) do
+    before do
       @hash = {"b" => "b", :a => "a", :z => "z", "alpha" => "alpha"}
     end
 
@@ -290,7 +379,7 @@ EOS
     end
     
     it "plain multiline with sorted keys" do
-      @hash.ai(:plain => true, :sorted_hash_keys => true).should == <<-EOS.strip
+      @hash.ai(:plain => true, :sort_keys => true).should == <<-EOS.strip
 {
          :a => "a",
     "alpha" => "alpha",
@@ -304,17 +393,58 @@ EOS
 
   #------------------------------------------------------------------------------
   describe "Negative options[:indent]" do
-    before(:each) do
-      @hash = { [0, 0, 255] => :yellow, :red => "rgb(255, 0, 0)", "magenta" => "rgb(255, 0, 255)" }
+    #
+    # With Ruby < 1.9 the order of hash keys is not defined so we can't
+    # reliably compare the output string.
+    #
+    it "hash keys must be left aligned" do
+      hash = { [0, 0, 255] => :yellow, :red => "rgb(255, 0, 0)", "magenta" => "rgb(255, 0, 255)" }
+      out = hash.ai(:plain => true, :indent => -4, :sort_keys => true)
+      out.should == <<-EOS.strip
+{
+    [ 0, 0, 255 ] => :yellow,
+    "magenta"     => "rgb(255, 0, 255)",
+    :red          => "rgb(255, 0, 0)"
+}
+EOS
     end
 
-    it "hash keys must be left aligned" do
-      out = @hash.ai(:plain => true, :indent => -4)
-      out.start_with?("{\n").should == true
-      out.include?('    :red          => "rgb(255, 0, 0)"').should == true
-      out.include?('    "magenta"     => "rgb(255, 0, 255)"').should == true
-      out.include?('    [ 0, 0, 255 ] => :yellow').should == true
-      out.end_with?("\n}").should == true
+    it "nested hash keys should be indented (array of hashes)" do
+      arr = [ { :a => 1, :bb => 22, :ccc => 333}, { 1 => :a, 22 => :bb, 333 => :ccc} ]
+      out = arr.ai(:plain => true, :indent => -4, :sort_keys => true)
+      out.should == <<-EOS.strip
+[
+    [0] {
+        :a   => 1,
+        :bb  => 22,
+        :ccc => 333
+    },
+    [1] {
+        1   => :a,
+        22  => :bb,
+        333 => :ccc
+    }
+]
+EOS
+    end
+
+    it "nested hash keys should be indented (hash of hashes)" do
+      arr = { :first => { :a => 1, :bb => 22, :ccc => 333}, :second => { 1 => :a, 22 => :bb, 333 => :ccc} }
+      out = arr.ai(:plain => true, :indent => -4, :sort_keys => true)
+      out.should == <<-EOS.strip
+{
+    :first  => {
+        :a   => 1,
+        :bb  => 22,
+        :ccc => 333
+    },
+    :second => {
+        1   => :a,
+        22  => :bb,
+        333 => :ccc
+    }
+}
+EOS
     end
   end
 
@@ -363,7 +493,7 @@ EOS
   #------------------------------------------------------------------------------
   describe "Utility methods" do
     it "should merge options" do
-      ap = AwesomePrint.new
+      ap = AwesomePrint::Inspector.new
       ap.send(:merge_options!, { :color => { :array => :black }, :indent => 0 })
       options = ap.instance_variable_get("@options")
       options[:color][:array].should == :black
@@ -374,7 +504,7 @@ EOS
 
   #------------------------------------------------------------------------------
   describe "Struct" do
-    before(:each) do
+    before do
       @struct = unless defined?(Struct::SimpleStruct)
         Struct.new("SimpleStruct", :name, :address).new
       else
@@ -454,6 +584,67 @@ EOS
       end
       weird.new.ai(:plain => true).should == ''
     end
+
+    it "handle frozen object.inspect" do
+      weird = Class.new do
+        def inspect
+          "ice".freeze
+        end
+      end
+      weird.new.ai(:plain => false).should == "ice"
+    end
+
+    # See https://github.com/michaeldv/awesome_print/issues/35
+    it "handle array grep when pattern contains / chapacter" do
+      hash = { "1/x" => 1,  "2//x" => :"2" }
+      grepped = hash.keys.grep(/^(\d+)\//) { $1 }
+      grepped.ai(:plain => true, :multiline => false).should == '[ "1", "2" ]'
+    end
+
+    it "returns value passed as a parameter" do
+      object = rand
+      self.stub!(:puts)
+      (ap object).should == object
+    end
+
+    # Require different file name this time (lib/ap.rb vs. lib/awesome_print).
+    it "several require 'awesome_print' should do no harm" do
+      require File.expand_path(File.dirname(__FILE__) + '/../lib/ap')
+      lambda { rand.ai }.should_not raise_error
+    end
+  end
+
+  describe "HTML output" do
+    it "wraps ap output with plain <pre> tag" do
+      markup = rand
+      markup.ai(:html => true, :plain => true).should == "<pre>#{markup}</pre>"
+    end
+
+    it "wraps ap output with <pre> tag with colorized <kbd>" do
+      markup = rand
+      markup.ai(:html => true).should == %Q|<pre><kbd style="color:blue">#{markup}</kbd></pre>|
+    end
+
+    it "wraps multiline ap output with <pre> tag with colorized <kbd>" do
+      markup = [ 1, :two, "three" ]
+      markup.ai(:html => true).should == <<-EOS.strip
+<pre>[
+    <kbd style="color:white">[0] </kbd><pre><kbd style="color:blue">1</kbd></pre>,
+    <kbd style="color:white">[1] </kbd><pre><kbd style="color:darkcyan">:two</kbd></pre>,
+    <kbd style="color:white">[2] </kbd><pre><kbd style="color:brown">&quot;three&quot;</kbd></pre>
+]</pre>
+EOS
+    end
+
+    it "encodes HTML entities (plain)" do
+      markup = ' &<hello>'
+      markup.ai(:html => true, :plain => true).should == '<pre>&quot; &amp;&lt;hello&gt;&quot;</pre>'
+    end
+
+    it "encodes HTML entities (color)" do
+      markup = ' &<hello>'
+      markup.ai(:html => true).should == '<pre><kbd style="color:brown">&quot; &amp;&lt;hello&gt;&quot;</kbd></pre>'
+    end
   end
 
   #------------------------------------------------------------------------------
@@ -504,20 +695,32 @@ EOS
     it "inherited from File should be displayed as File" do
       class My < File; end
 
-      my = File.new('/dev/null')
+      my = File.new('/dev/null') rescue File.new('nul')
       my.ai(:plain => true).should == "#{my.inspect}\n" << `ls -alF #{my.path}`.chop
     end
 
     it "inherited from Dir should be displayed as Dir" do
       class My < Dir; end
 
-      my = My.new('/tmp')
+      require 'tmpdir'
+      my = My.new(Dir.tmpdir)
       my.ai(:plain => true).should == "#{my.inspect}\n" << `ls -alF #{my.path}`.chop
     end
 
     it "should handle a class that defines its own #send method" do
       class My
         def send(arg1, arg2, arg3); end
+      end
+
+      my = My.new
+      my.methods.ai(:plain => true).should_not raise_error(ArgumentError)
+    end
+
+    it "should handle a class defines its own #method method (ex. request.method)" do
+      class My
+        def method
+          'POST'
+        end
       end
 
       my = My.new

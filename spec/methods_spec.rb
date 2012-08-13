@@ -1,6 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe "Single method" do
+  before do
+    stub_dotfile!
+  end
+
   after do
     Object.instance_eval{ remove_const :Hello } if defined?(Hello)
   end
@@ -77,6 +81,10 @@ describe "Single method" do
 end
 
 describe "Object methods" do
+  before do
+    stub_dotfile!
+  end
+
   after do
     Object.instance_eval{ remove_const :Hello } if defined?(Hello)
   end
@@ -194,6 +202,10 @@ describe "Object methods" do
 end
 
 describe "Class methods" do
+  before do
+    stub_dotfile!
+  end
+
   after do
     Object.instance_eval{ remove_const :Hello } if defined?(Hello)
   end
@@ -301,6 +313,10 @@ end
 
 if RUBY_VERSION >= '1.9.2'
   describe "Ruby 1.9.2+ Method#parameters" do
+    before do
+      stub_dotfile!
+    end
+
     after do
       Object.instance_eval{ remove_const :Hello } if defined?(Hello)
     end
@@ -354,6 +370,7 @@ describe "Methods arrays" do
   end
 
   it "obj1.methods - obj2.methods should be awesome printed" do
+    stub_dotfile!
     class Hello
       def self.m1; end
     end
@@ -362,6 +379,7 @@ describe "Methods arrays" do
   end
 
   it "obj1.methods & obj2.methods should be awesome printed" do
+    stub_dotfile!
     class Hello
       def self.m1; end
       def self.m2; end
@@ -374,6 +392,7 @@ describe "Methods arrays" do
   end
 
   it "obj1.methods.grep(pattern) should be awesome printed" do
+    stub_dotfile!
     class Hello
       def self.m1; end
       def self.m2; end
@@ -396,6 +415,7 @@ describe "Methods arrays" do
   end
 
   it "obj1.methods.grep(pattern, &block) should be awesome printed" do
+    stub_dotfile!
     class Hello
       def self.m0; end
       def self.none; end
@@ -405,5 +425,34 @@ describe "Methods arrays" do
 
     out = Hello.methods.grep(/^m(\d)$/) { %w(none one)[$1.to_i] }.ai(:plain => true)
     out.should == "[\n    [0] none() Hello\n    [1]  one() Hello\n]"
+  end
+
+  # See https://github.com/michaeldv/awesome_print/issues/30 for details.
+  it "grepping methods and converting them to_sym should work as expected" do
+    class Hello
+      private
+      def him; end
+
+      def his
+        private_methods.grep(/^h..$/) { |n| n.to_sym }
+      end
+
+      def her
+        private_methods.grep(/^.e.$/) { |n| n.to_sym }
+      end
+    end
+
+    hello = Hello.new
+    (hello.send(:his) - hello.send(:her)).sort_by { |x| x.to_s }.should == [ :him, :his ]
+  end
+
+  it "appending garbage to methods array should not raise error" do
+    arr = 42.methods << [ :wtf ]
+    arr.ai(:plain => true).should_not raise_error(TypeError)
+    if RUBY_VERSION < '1.9.2'
+      arr.ai(:plain => true).should =~ /\s+wtf\(\?\)\s+\?/      # [ :wtf ].to_s => "wtf"
+    else
+      arr.ai(:plain => true).should =~ /\s+\[:wtf\]\(\?\)\s+\?/ # [ :wtf ].to_s => [:wtf]
+    end
   end
 end

@@ -1,3 +1,31 @@
+1.0.2
+  - Added formatting of Mongoid documents (Adam Doppelt)
+  - ActiveRecord objects display attributes only. Use :raw => true to display the entire object
+  - ActiveSupport::Date objects get formatted as regular Date
+  - Rails.logger.ap colorizes output based on ActiveSupport::LogSubscriber.colorize_logging (default is true)
+  - Improved formatting of methods array
+
+1.0.1
+  - Updated repo tags for Rubygems.org
+
+1.0.0 Thanksgiving edition
+  - Added ability to format *arbitrary* Ruby object
+  - Added :limit option to limit large output for arrays and hashes (Andrew Horsman)
+  - Improved HTML formatting when :html => true (Daniel Johnson)
+  - Added Mongoid extension (Adam Doppelt)
+  - Added Nokogiri extension (Adam Doppelt)
+  - Removed Jeweler gem dependency
+
+0.4.0
+  - 'ap object' now returns the object (Stephan Hagemann)
+  - Added :html => true option to enable HTML colors rather that ANSI (ex. Sinatra templates)
+  - Added AwesomePrint.force_colors! to allow color output on demand (Andrew O'Brien)
+  - Added MongoMapper formatter mixin (Elpizo Choi)
+  - Fixed formatting of methods array when object#method is overridden
+  - Fixed potential stack errors by checking whether AwesomePrint is already loaded
+  - Improved Ruby 1.8.6 and 1.8.7 compatibility
+  - Improved Windows compatibility (Viktar Basharymau)
+
 0.3.2
   - Make sure Rails mixins get loaded in Rails console when required from .irbrc
   - Fixed an issue with classes that define their own #send method (ex: Socket)
